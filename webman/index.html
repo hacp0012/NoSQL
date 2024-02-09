@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+
+    <title>NoSql Sleek Wrapper</title>
+    <meta content="" name="description" />
+    <meta content="" name="keywords" />
+
+    <!-- Favicons -->
+    <link href="assets/img/favicon.png" rel="icon" />
+    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+      rel="stylesheet"
+    />
+
+    <!-- Vendor CSS Files -->
+    <link
+      href="assets/vendor/bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="assets/vendor/json-editor/jquery.json-viewer.css"
+      rel="stylesheet"
+    />
+
+    <!-- Template Main CSS File -->
+    <link href="assets/css/style.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="VUEJS">
+      <!-- ======= Sidebar ======= -->
+      <aside
+        id="sidebar"
+        class="sidebar ms-2"
+        style="border-radius: 15px 15px 0px 0px"
+      >
+        <div class="text-center">
+          <!-- <img
+            src="assets/img/logo.png"
+            alt="sleek wrapper logo"
+            width="108"
+            height="54"
+          /> -->
+        </div>
+        <ul class="sidebar-nav" id="sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link collapsed" href="#">
+              <!-- <i class="bi bi-settings"></i> -->
+              <span>Web Manager</span>
+            </a>
+          </li>
+          <!-- End Dashboard Nav -->
+
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              data-bs-target="#components-nav"
+              data-bs-toggle="collapse"
+              href="#"
+            >
+              <i class="bi bi-menu-button-wide"></i
+              ><span>Stores ({{ sizeParser(stores.size) }})</span
+              ><i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul
+              id="components-nav"
+              class="nav-content collapse show"
+              data-bs-parent="#sidebar-nav"
+            >
+              <li>
+                <a
+                  href="#"
+                  title="Actualiser la liste des Stores"
+                  @click="storesGetList()"
+                >
+                  <span>-- Actualiser --</span>
+                </a>
+              </li>
+              <li v-for="i, key in stores.list" :key="key">
+                <a href="#" :title="'Store: ' + i" @click="storesOpenOne(key)">
+                  <i class="bi bi-circle"></i><span>{{ i }}</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <!-- End Components Nav -->
+
+          <li class="nav-heading">Divers</li>
+
+          <li class="nav-item">
+            <a
+              class="nav-link collapsed"
+              href="#"
+              title="Cree un store."
+              @click="storesCreateOne()"
+            >
+              <i class="bi bi-plus"></i>
+              <span>Crée un store</span>
+            </a>
+            <select
+              v-model="main.storage.path"
+              name="storages"
+              class="form-control form-control-sm mt-3"
+              id="inputStorages"
+              title="Changer le defautl storage folder"
+              @change="changeStorage()"
+            >
+              <option
+                v-for="i, key in main.storage.list"
+                :key="key"
+                :value="i"
+                :title="i"
+              >
+                {{ i == 'default' ? i + " Storage" : i }}
+              </option>
+            </select>
+            <div class="small" style="color: grey">
+              <b>Avancé</b> : changer le chemin du Storage path. vous pouvez
+              ajouter d'autres via le fichier
+              webman\explorer\storage_path[.php|.txt]. cette outil vous permet
+              de gérer plusieurs Storages qui contiendra vos Stores si haut.
+            </div>
+            <div class="small text-center mt-5">
+              A NoSql Database without any Chemat
+            </div>
+            <h6 class="text-center">
+              <div class="mt-2">&copy;Congo Cloud Computer</div>
+              <div>Software</div>
+            </h6>
+            <div class="text-center">
+              <a href="3c-numeric.com" title="Go! visit it.">3c-numeric.com</a>
+            </div>
+          </li>
+        </ul>
+      </aside>
+      <!-- End Sidebar-->
+
+      <main id="main" class="main mt-0">
+        <div class="pagetitle">
+          <div class="row align-items-center">
+            <div class="col-1" style="height: 47px">
+              <div
+                v-if="main.loading"
+                class="spinner-border text-primary spinner-border-sm_"
+                role="status"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <button v-else class="btn" @click="sidebar()">
+                <i class="bi bi-list h3"></i>
+              </button>
+            </div>
+            <div class="col-lg-11">
+              <h1>Sleek Wrapper</h1>
+            </div>
+          </div>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="#">Manager</a></li>
+              <li v-show="stores.selected >= 0" class="breadcrumb-item">
+                {{ stores.selected >= 0 ? stores.list[stores.selected] : '' }}
+              </li>
+              <li class="breadcrumb-item active">
+                <span v-show="stores.selected >= 0">
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    title="Supprimer ce store."
+                    @click="storesDeleteOne()"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    title="Renomer ce store."
+                    @click="storesRenameOne()"
+                  >
+                    <i class="bi bi-file-text"></i>
+                  </button>
+                </span>
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <!-- End Page Title -->
+
+        <section class="section">
+          <div class="row align-items-top">
+            <div class="col-lg-7">
+              <!-- Card with header and footer -->
+              <div
+                class="card"
+                style="height: 666px; border-radius: 15px 15px 15px 15px"
+              >
+                <div class="row g-0 align-items-top">
+                  <div class="col-6">
+                    <div
+                      class="card shadow-none"
+                      style="border-radius: 15px 15px 15px 15px"
+                    >
+                      <div
+                        class="card-header overflow-auto pb-0"
+                        style="height: 80px"
+                      >
+                        Collections
+                        <div class="">
+                          <b title="La taille de tout les collectons.">
+                            {{ sizeParser(collections.size) }}
+                          </b>
+                          /
+                          <span title="Nombres des collections dans ce Store">
+                            {{ collections.list.length }}
+                            <i class="bi bi-folder"></i>
+                          </span>
+                          <div class="vr ms-2"></div>
+                          <button
+                            v-show="collections.list.length"
+                            class="btn btn-sm"
+                            title="Actualiser la list."
+                            @click="collectionReload()"
+                          >
+                            <i class="bi bi-repeat"></i>
+                          </button>
+                          <button
+                            v-show="stores.selected >= 0"
+                            type="button"
+                            class="btn btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalDialogCreateCollection"
+                            title="Paramètres de configuration de cette collection."
+                          >
+                            <i class="bi bi-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div
+                        class="card-body overflow-auto p-1"
+                        style="height: 586px"
+                      >
+                        <h5>
+                          {{ stores.selected >= 0 ? stores.list[stores.selected]
+                          : "Selectionner un store" }}/
+                        </h5>
+                        <ul class="sidebar-nav">
+                          <li
+                            v-for="i, key in collections.list"
+                            :key="key"
+                            class="nav-item"
+                          >
+                            <a
+                              class="nav-link collapsed"
+                              href="#"
+                              title="Afficher les champs de cette collection."
+                              @click="collectionOpenOne(key)"
+                            >
+                              <i class="bi bi-folder"></i>
+                              <!-- <i class="bi bi-folder2-open"></i> -->
+                              <span>{{ i }}</span>
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                      <!-- <div class="card-footer">Footer</div> -->
+                    </div>
+                  </div>
+                  <div class="col d-flex" style="height: 500px; max-width: 0px">
+                    <div class="vr"></div>
+                  </div>
+                  <div class="col-6">
+                    <div
+                      class="card shadow-none"
+                      style="border-radius: 15px 15px 15px 15px"
+                    >
+                      <div
+                        class="card-header overflow-auto pb-0 px-0"
+                        style="height: 80px"
+                      >
+                        Fields
+                        <mark
+                          title="Nombre total des champs dans cette collection."
+                          style="border-radius: 7px"
+                        >
+                          {{ fields.position.total }} Champs
+                        </mark>
+                        <div v-show="fields.list.length > 0" class="">
+                          <b>
+                            <span
+                              title=" Taille de la collection dans laquelle le fichier est.."
+                              >{{ sizeParser(fields.size) }}</span
+                            >
+                          </b>
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalDialogScrollable"
+                            title="Paramètres de configuration de cette collection."
+                          >
+                            <i class="bi bi-gear"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm"
+                            title="Actualiser la list."
+                            @click="fieldReload()"
+                          >
+                            <i class="bi bi-repeat"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm"
+                            title="Trouver un élément grâce à son index."
+                            @click="fieldFindById()"
+                          >
+                            <i class="bi bi-search"></i>
+                          </button>
+                          <div class="vr"></div>
+                          <small class="small">
+                            <button
+                              class="btn btn-sm"
+                              title="Précédent - 50"
+                              @click="fieldPrev()"
+                            >
+                              <i class="bi bi-chevron-compact-left"></i>
+                            </button>
+                            <span
+                              class="small"
+                              title="Sauts. sans oublier que 1 équivaut 50 champs"
+                            >
+                              {{ fields.position.at }}/{{ fields.position.of }}
+                            </span>
+                            <button
+                              class="btn btn-sm"
+                              title="Prochains 50 - éléments"
+                              @click="fieldNext()"
+                            >
+                              <i class="bi bi-chevron-compact-right"></i>
+                            </button>
+                          </small>
+                        </div>
+                      </div>
+                      <div
+                        class="card-body overflow-auto p-1"
+                        style="height: 586px"
+                      >
+                        <h5>
+                          {{ collections.list.length ?
+                          collections.list[collections.selected] :
+                          "Selectionner\ une collection" }}
+                        </h5>
+                        <ul class="sidebar-nav" id="sidebar-nav_">
+                          <li
+                            v-for="i, key in fields.list"
+                            :key="key"
+                            class="nav-item"
+                          >
+                            <a
+                              class="nav-link collapsed"
+                              href="#"
+                              title="Afficher les contenus de ce champ."
+                              @click="fieldOpenOne(key)"
+                            >
+                              <i class="bi bi-file-text"></i>
+                              <!-- <i class="bi bi-file-text-fill"></i> -->
+                              <span>Data : {{ i }}</span>
+                            </a>
+                          </li>
+                        </ul>
+                        <div v-if="collections.selected >= 0 ">
+                          <button
+                            class="btn btn-secondary_ btn-sm"
+                            title="Crée un nouveau champ."
+                            @click="dataAddOne()"
+                          >
+                            <i class="bi bi-plus"></i>
+                            Nouveau champs
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <!-- Card with an image on top -->
+              <div class="card" style="border-radius: 15px">
+                <div
+                  class="card-header overflow-auto pb-0"
+                  style="height: 80px"
+                >
+                  <i class="bi bi-file-text-fill"></i> Data
+                  <div v-if="field.data != null">
+                    <small>
+                      <b title="Taille du fichier actuel.">
+                        {{ sizeParser(field.size) }}
+                      </b>
+                    </small>
+                    <button
+                      class="btn btn-sm"
+                      title="Supprimer ce fichier."
+                      @click="dataDeleteOne()"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <div class="vr"></div>
+                    <button
+                      class="btn btn-sm"
+                      title="Actualiser"
+                      @click="dataReload()"
+                    >
+                      <i class="bi bi-repeat"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm"
+                      title="Considérer ce champ comme nouveau."
+                      @click="dataAddOne()"
+                    >
+                      <i class="bi bi-plus"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm"
+                      title="Enregistrer les modifications apporté au fichier."
+                      @click="dataSaveOne()"
+                    >
+                      <i class="bi bi-sd-card"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body overflow-auto" style="height: 586px">
+                  <div v-show="field.data != null">
+                    <h5>
+                      {{ collections.list.length ?
+                      collections.list[collections.selected] : "" }}/{{ field.id
+                      > 0 ? fields.list[fields.selected] : '' }}.json
+                    </h5>
+                    primary_key :
+                    <b
+                      >{{ fields.collectionInfos.primary_key }} : {{ field.id
+                      }}</b
+                    >
+                  </div>
+                  <div v-show="field.data == null">
+                    <h5 class="mt-3">Selectionner un champs</h5>
+                    <small v-show="collections.selected >= 0">
+                      Ou créer un à partir de celui-ci. il suffit de remplacer
+                      le <code>null</code> par du code json correcte.
+                    </small>
+                  </div>
+                  <div v-show="collections.selected >= 0">
+                    <pre id="json-editor" class="p-3" style="outline: 0"></pre>
+                  </div>
+                </div>
+              </div>
+              <!-- End Card with an image on top -->
+            </div>
+          </div>
+        </section>
+
+        <!-- End Scrolling Modal-->
+        <div class="modal fade" id="modalDialogCreateCollection" tabindex="-1">
+          <div class="modal-dialog modal-dialog-scrollable_">
+            <div class="modal-content shadow-1" style="border: none">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Création d'une nouvelle collection</h5>
+
+                  <!-- Horizontal Form -->
+                  <form>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title=""
+                        >Nom</label
+                      >
+                      <div class="col-sm-9">
+                        <input
+                          v-model="collections.create.name"
+                          type="text"
+                          class="form-control"
+                          id="inputNameCreateColl"
+                          placeholder="Nom de la nouvelle collection"
+                        />
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title="La clé primaire des champs de cette collection. il est conseillé de na pas le modifier si la collection contient déjà des champs."
+                        >Primary key</label
+                      >
+                      <div class="col-sm-9">
+                        <input
+                          v-model="collections.create.primary_key"
+                          type="text"
+                          class="form-control"
+                          id="inputTextCreateColl"
+                          placeholder="Ne doit etre vide"
+                        />
+                      </div>
+                    </div>
+                    <div class="small">
+                      Les autres paramètres vous pouvez le modifier plus tard
+                      après création de la collection.
+                    </div>
+                    <div class="text-center">
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-1"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Fermer le dialogue."
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-primary ms-1"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Créé une nouvelle collection."
+                        @click="collectionCreate()"
+                      >
+                        <i class="bi bi-sd-card"></i>
+                        Create
+                      </button>
+                      <!-- <button type="reset" class="btn btn-secondary">Reset</button> -->
+                    </div>
+                  </form>
+                  <!-- End Horizontal Form -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End Modal Dialog Scrollable-->
+
+        <!-- End Scrolling Modal-->
+        <div class="modal fade" id="modalDialogScrollable" tabindex="-1">
+          <div class="modal-dialog modal-dialog-scrollable_">
+            <div class="modal-content shadow-1" style="border: none">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Configuration de la collection</h5>
+
+                  <!-- Horizontal Form -->
+                  <form>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title=""
+                        >Nom</label
+                      >
+                      <div class="col-sm-9">
+                        <input
+                          v-model="fields.collectionsRenameTmp"
+                          type="text"
+                          class="form-control"
+                          id="inputName"
+                        />
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title="La clé primaire des champs de cette collection. il est conseillé de na pas le modifier si la collection contient déjà des champs."
+                        >Primary key</label
+                      >
+                      <div class="col-sm-9">
+                        <input
+                          v-model="fields.collectionInfos.primary_key"
+                          type="text"
+                          class="form-control"
+                          id="inputText"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title="La condition de recherche par défaut."
+                        >Search cond</label
+                      >
+                      <div class="col-sm-9">
+                        <!-- <input type="email" id="inputEmail"> -->
+                        <select
+                          v-model="fields.collectionInfos.search.mode"
+                          name="alogorithm"
+                          class="form-control"
+                          id="inputCond"
+                        >
+                          <option value="and">and</option>
+                          <option value="or">or</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label
+                        for="inputEmail3"
+                        class="col-sm-3 col-form-label"
+                        title="Algorithme de recherche par défaut."
+                        >Search Algorithme</label
+                      >
+                      <div class="col-sm-9">
+                        <select
+                          v-model.number="fields.collectionInfos.search.algorithm"
+                          name="alogorithm"
+                          class="form-control"
+                          id="inputAlgo"
+                        >
+                          <option value="1">hits</option>
+                          <option value="2">hits_prioritize</option>
+                          <option value="3">prioritize</option>
+                          <option value="4">prioritize_position</option>
+                        </select>
+                      </div>
+                    </div>
+                    <!-- <div class="row mb-3">
+                      <div class="col-sm-10 offset-sm-2">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="gridCheck1">
+                          <label class="form-check-label" for="gridCheck1">
+                            Example checkbox
+                          </label>
+                        </div>
+                      </div>
+                    </div> -->
+                    <div class="text-center">
+                      <button
+                        type="button"
+                        class="btn btn-danger"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Supprimer cette collection."
+                        @click="collectionDelete()"
+                      >
+                        <i class="bi bi-trash"></i>
+                        Supprimer
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary ms-1"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Fermer le dialogue."
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-primary ms-1"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Enregistrer les modifications apporter."
+                        @click="collectionSaveConfigs()"
+                      >
+                        <i class="bi bi-sd-card"></i>
+                        Save
+                      </button>
+                      <!-- <button type="reset" class="btn btn-secondary">Reset</button> -->
+                    </div>
+                  </form>
+                  <!-- End Horizontal Form -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End Modal Dialog Scrollable-->
+      </main>
+      <!-- End #main -->
+    </div>
+
+    <a
+      href="#"
+      class="back-to-top d-flex align-items-center justify-content-center"
+      ><i class="bi bi-arrow-up-short"></i
+    ></a>
+  </body>
+
+  <!-- Vendor JS Files -->
+  <script src="assets/vendor/vue/vue.global.js"></script>
+  <script src="assets/vendor/jquery/jquery.js"></script>
+  <script src="assets/vendor/json-editor/jquery.json-editor.js"></script>
+  <script src="assets/vendor/json-editor/jquery.json-viewer.js"></script>
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/vendor/axios/axios.min.js"></script>
+
+  <!-- Template Main JS File -->
+  <!-- <script src="EXPRESS_RELOADER/Js/express_reloader.js"></script> -->
+
+  <script>
+    Vue.createApp({
+      name: "MainPage",
+      data() {
+        return {
+          main: {
+            storeName: "",
+            loading: false,
+            sidebar: false,
+            storage: {
+              path: "",
+              list: [],
+            },
+          },
+          stores: {
+            list: [1],
+            size: 0,
+            selected: -1, // index
+            create: {
+              name: "",
+            },
+            loading: {
+              delete: false,
+              load: false,
+            },
+          },
+          collections: {
+            list: [],
+            selected: -1, // index
+            size: 0,
+            create: {
+              name: "",
+              primary_key: "_id",
+              search: { mode: "and", algorithm: 1 },
+            },
+            loading: {
+              delete: false,
+              load: false,
+            },
+          },
+          fields: {
+            list: [],
+            size: 0,
+            collectionInfos: {
+              primary_key: "_id",
+              search: { mode: "and", algorithm: 1 },
+            },
+            collectionsRenameTmp: "",
+            selected: 0, // index
+            position: {
+              at: 0,
+              of: 0,
+              total: 0,
+            },
+            loading: {
+              delete: false,
+              load: false,
+            },
+          },
+          field: {
+            data: null,
+            id: 0,
+            loading: false,
+            editor: null,
+            size: 0,
+          },
+        };
+      },
+      mounted() {
+        this.field.editor = new JsonEditor("#json-editor", this.field.data);
+        this.init();
+      },
+      methods: {
+        init() {
+          this.storesGetList();
+          this.initStorages();
+        },
+        // MISC
+        sidebar() {
+          if (this.main.sidebar) {
+            $("body").removeClass("toggle-sidebar");
+            this.main.sidebar = false;
+          } else {
+            this.main.sidebar = true;
+            $("body").addClass("toggle-sidebar");
+          }
+        },
+        // GLOBAL
+        sizeParser(size = 0) {
+          const real = size / 1024;
+          const matched = (real + "").match(/[0-9]*\.?[0-9]/)[0];
+          if (size < 1024) {
+            // < 1K
+            return size + " Byte";
+          } else if (size < 1024000) {
+            // < 1M
+            return matched + " Kb";
+          } else if (size < 1024000000) {
+            // < 1G
+            return matched + " Mb";
+          } else if (size < 1024000000000) {
+            // < 1T
+            return matched + " Gb";
+          } else return matched + " Tb";
+        },
+        // STORAGES
+        initStorages() {
+          // GET PATH NAMES
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "stores",
+                action: "get_path_names",
+              },
+            })
+            .then(
+              function (response) {
+                this.main.storage.list = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+
+          // GET PATH NAME
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "stores",
+                action: "get_path_name",
+              },
+            })
+            .then(
+              function (response) {
+                this.main.storage.path = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        changeStorage() {
+          // CHANGE PATH NAME
+          const name = this.main.storage.path;
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "stores",
+                action: "set_path",
+                name,
+              },
+            })
+            .then(
+              function (response) {
+                // this.main.storage.list = response.data;
+                location.reload();
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        // STORES
+        storesGetList() {
+          // GET LIST
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "stores",
+                action: "list",
+              },
+            })
+            .then(
+              function (response) {
+                this.stores.list = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+
+          // GET SIZE
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "stores",
+                action: "size",
+              },
+            })
+            .then(
+              function (response) {
+                this.stores.size = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        storesOpenOne(index) {
+          // restor fields
+          this.fields.list = [];
+          this.fields.size = 0;
+          this.fields.selected = -1;
+          this.fields.collectionInfos.primary_key = "";
+          this.fields.position.at = 0;
+          this.fields.position.of = 0;
+
+          this.field.data = null;
+          this.field.id = 0;
+          this.field.size = 0;
+          this.field.editor.load(null);
+          // select
+          this.stores.selected = index;
+          this.collectionGetList(this.stores.list[index]);
+        },
+        storesRenameOne() {
+          const name = prompt(
+            "Vous êtes sur le point de renommer le store '" +
+              this.stores.list[this.stores.selected] +
+              "' avec un nouveau nom.\nEntré le nouveau nom de la store:",
+            this.stores.list[this.stores.selected]
+          );
+
+          // control value
+          let status =
+            name.trim() != "" && this.stores.list.includes(name.trim()) == false
+              ? true
+              : false;
+          status = name.trim().match(/[ ]/) == null;
+
+          // sending data
+          if (status) {
+            // CREATING Store
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "stores",
+                  action: "rename",
+                  store: "",
+                  collection: "",
+                  new: name.trim(),
+                  old: this.stores.list[this.stores.selected],
+                },
+              })
+              .then(
+                function (response) {
+                  // restor fields
+                  this.fields.list = [];
+                  this.fields.size = 0;
+                  this.fields.selected = -1;
+                  this.fields.collectionInfos.primary_key = "";
+                  this.fields.position.at = 0;
+                  this.fields.position.of = 0;
+
+                  this.field.data = null;
+                  this.field.id = 0;
+                  this.field.size = 0;
+                  this.field.editor.load(null);
+
+                  this.stores.selected = -1;
+
+                  this.storesGetList();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          } else
+            alert(
+              "Vérifier si le nom est correct ou n'existe pas car il ne doit pas contenir des espaces."
+            );
+        },
+        storesDeleteOne() {
+          const status = confirm(
+            "Vous êtes sur le point de supprimer ce store :" +
+              this.stores.list[this.stores.selected]
+          );
+
+          // sending data
+          if (status) {
+            // DELETING Store
+            const name = this.stores.list[this.stores.selected];
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "stores",
+                  action: "remove",
+                  store: "",
+                  collection: "",
+                  name,
+                },
+              })
+              .then(
+                function (response) {
+                  // restor fields
+                  this.fields.list = [];
+                  this.fields.size = 0;
+                  this.fields.selected = -1;
+                  this.fields.collectionInfos.primary_key = "";
+                  this.fields.position.at = 0;
+                  this.fields.position.of = 0;
+
+                  this.field.data = null;
+                  this.field.id = 0;
+                  this.field.size = 0;
+                  this.field.editor.load(null);
+
+                  this.stores.selected = -1;
+
+                  this.storesGetList();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          } else alert("Le store n'existe pas");
+        },
+        storesCreateOne() {
+          const name = prompt(
+            "Vous êtes sur le point de crée un nouveau STORE.\nEntré le nom du nouveau store:",
+            ""
+          );
+
+          // control value
+          let status =
+            name.trim() != "" && this.stores.list.includes(name.trim()) == false
+              ? true
+              : false;
+          status = name.trim().match(/[ ]/) == null;
+
+          // sending data
+          if (status) {
+            // CREATING Store
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "stores",
+                  action: "create",
+                  store: "",
+                  collection: "",
+                  name: name.trim(),
+                },
+              })
+              .then(
+                function (response) {
+                  this.storesGetList();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          } else
+            alert(
+              "Vérifier si le nom est correct ou n'existe pas car il ne doit pas contenir des espaces."
+            );
+        },
+        // COLLECTION
+        collectionGetList(storeName) {
+          // GET LIST
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "collections",
+                action: "list",
+                store: storeName,
+                collection: "",
+              },
+            })
+            .then(
+              function (response) {
+                this.collections.list = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+
+          // GET SIZE
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "collections",
+                action: "store_size",
+                store: storeName,
+                collection: "",
+              },
+            })
+            .then(
+              function (response) {
+                this.collections.size = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        collectionGetMetaData(collectionName) {
+          // GET DATA
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "collections",
+                action: "get_config",
+                store: this.stores.list[this.stores.selected],
+                collection: collectionName,
+              },
+            })
+            .then(
+              function (response) {
+                this.fields.collectionInfos = response.data;
+                this.fields.collectionsRenameTmp = collectionName;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+
+          // GET SIZE
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "collections",
+                action: "size",
+                store: this.stores.list[this.stores.selected],
+                collection: collectionName,
+              },
+            })
+            .then(
+              function (response) {
+                this.fields.size = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        collectionOpenOne(index) {
+          // restor fields
+
+          this.field.data = null;
+          this.field.id = 0;
+          this.field.size = 0;
+          this.field.editor.load(null);
+          // select
+          this.collections.selected = index;
+          this.collectionGetMetaData(this.collections.list[index]);
+          this.fieldGetList(this.collections.list[index]);
+        },
+        collectionSaveConfigs() {
+          const cfg = this.fields.collectionInfos;
+
+          // SET CFG
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "collections",
+                action: "update_config",
+                store: this.stores.list[this.stores.selected],
+                collection: this.collections.list[this.collections.selected],
+                config: JSON.stringify(cfg),
+              },
+            })
+            .then(
+              function (response) {
+                // this.fields.collectionInfos = response.data;
+                this.collectionRename(this.fields.collectionsRenameTmp);
+                this.collectionReload();
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        collectionDelete() {
+          if (
+            confirm(
+              "Vous êtes sur le point de supprimer la collection : '" +
+                this.collections.list[this.collections.selected] +
+                "'"
+            )
+          ) {
+            // DELETE COLLECTION
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "collections",
+                  action: "remove",
+                  store: this.stores.list[this.stores.selected],
+                  collection: this.collections.list[this.collections.selected],
+                },
+              })
+              .then(
+                function (response) {
+                  this.collectionReload();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          }
+        },
+        collectionCreate() {
+          const data = this.collections.create;
+
+          // control value
+          let status =
+            data.name.trim() != "" &&
+            this.collections.list.includes(data.name.trim()) == false
+              ? true
+              : false;
+          status = data.name.trim().match(/[ ]/) == null;
+          status = status && data.primary_key.trim() != "" ? true : false;
+
+          // sending data
+          if (status) {
+            // RENAME COLLECTION
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "collections",
+                  action: "create",
+                  store: this.stores.list[this.stores.selected],
+                  collection: "",
+                  name: data.name.trim(),
+                  config: JSON.stringify({ primary_key: data.primary_key }),
+                },
+              })
+              .then(
+                function (response) {
+                  this.collections.create.name = "";
+                  this.collections.create.primary_key = "_id";
+
+                  this.collectionReload();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          } else {
+            alert("Une valeur n'est pas correct.");
+          }
+        },
+        collectionRename(newColName) {
+          if (
+            newColName.trim() !=
+            this.collections.list[this.collections.selected]
+          ) {
+            // RENAME COLLECTION
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "collections",
+                  action: "rename",
+                  store: this.stores.list[this.stores.selected],
+                  collection: this.collections.list[this.collections.selected],
+                  name: newColName.trim(),
+                },
+              })
+              .then(
+                function (response) {
+                  this.collectionReload();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          }
+        },
+        collectionReload() {
+          this.storesOpenOne(this.stores.selected);
+        },
+        // FIELDS
+        fieldPrev() {
+          const collectionName =
+            this.collections.list[this.collections.selected];
+          const at = this.fields.position.at - 1;
+          // restor fields
+
+          this.field.data = null;
+          this.field.id = 0;
+          this.field.size = 0;
+          this.field.editor.load(null);
+          // select
+          this.fieldGetList(collectionName, at);
+        },
+        fieldNext() {
+          const collectionName =
+            this.collections.list[this.collections.selected];
+          const at = this.fields.position.at + 1;
+          // restor fields
+
+          this.field.data = null;
+          this.field.id = 0;
+          this.field.size = 0;
+          this.field.editor.load(null);
+          // select
+          this.fieldGetList(collectionName, at);
+        },
+        fieldReload() {
+          this.collectionOpenOne(this.collections.selected);
+        },
+        fieldOpenOne(index) {
+          this.fields.selected = index;
+          this.dataGet(parseInt(this.fields.list[index]));
+        },
+        fieldFindById() {
+          const name = prompt("Entrer le nom du data:", 0);
+
+          // FIND FIELD
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "fields",
+                action: "find",
+                store: this.stores.list[this.stores.selected],
+                collection: this.collections.list[this.collections.selected],
+                name,
+              },
+            })
+            .then(
+              function (response) {
+                if (
+                  response.data[this.fields.collectionInfos.primary_key] ==
+                  undefined
+                ) {
+                  alert("Aucun élément trouver.");
+                } else {
+                  this.fields.list = [name];
+                  this.fieldOpenOne(0);
+                }
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        fieldGetList(collectionName, at = 1) {
+          // GET LIST
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "fields",
+                action: "list",
+                store: this.stores.list[this.stores.selected],
+                collection: collectionName,
+                at,
+              },
+            })
+            .then(
+              function (response) {
+                this.fields.list = response.data.list;
+                this.fields.position.total = response.data.total;
+                this.fields.position.of = response.data.of;
+                this.fields.position.at = response.data.at;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        // DATAS
+        dataGet(db_index) {
+          // GET DATA
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "data",
+                action: "get",
+                store: this.stores.list[this.stores.selected],
+                collection: this.collections.list[this.collections.selected],
+                index: db_index,
+              },
+            })
+            .then(
+              function (response) {
+                delete response.data[this.fields.collectionInfos.primary_key];
+                this.field.data = response.data;
+                this.field.id = db_index;
+                this.field.editor.load(this.field.data);
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+
+          // GET SIZE
+          this.main.loading = true;
+          axios
+            .get(location.pathname + "explorer/main.php", {
+              params: {
+                panel: "data",
+                action: "size",
+                store: this.stores.list[this.stores.selected],
+                collection: this.collections.list[this.collections.selected],
+                index: db_index,
+              },
+            })
+            .then(
+              function (response) {
+                delete response.data[this.fields.collectionInfos.primary_key];
+                this.field.size = response.data;
+                this.main.loading = false;
+              }.bind(this)
+            )
+            .catch(
+              function (err) {
+                console.log(err);
+                this.main.loading = false;
+              }.bind(this)
+            );
+        },
+        dataDeleteOne() {
+          const status = confirm(
+            "Vous etes sur le point de supprimer ce champs."
+          );
+          if (status) {
+            // DELETE DATA
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "data",
+                  action: "remove",
+                  store: this.stores.list[this.stores.selected],
+                  collection: this.collections.list[this.collections.selected],
+                  index: this.field.id,
+                },
+              })
+              .then(
+                function (response) {
+                  this.collectionReload();
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          }
+        },
+        dataSaveOne() {
+          const id = this.field.id;
+          let data = {};
+          try {
+            data = this.field.editor.get();
+
+            // UPDATE DATA
+            this.main.loading = true;
+            axios
+              .get(location.pathname + "explorer/main.php", {
+                params: {
+                  panel: "data",
+                  action: "update",
+                  store: this.stores.list[this.stores.selected],
+                  collection: this.collections.list[this.collections.selected],
+                  index: this.field.id,
+                  data: JSON.stringify(data),
+                },
+              })
+              .then(
+                function (response) {
+                  this.dataGet(this.field.id);
+                  this.main.loading = false;
+                }.bind(this)
+              )
+              .catch(
+                function (err) {
+                  console.log(err);
+                  this.main.loading = false;
+                }.bind(this)
+              );
+          } catch (err) {
+            this.main.loading = false;
+            alert(
+              "Il y'a une valeur incorrect dans le DATA farmat JSON que vous avec ecrite."
+            );
+          }
+        },
+        dataAddOne() {
+          const id = this.field.id;
+          let data = {};
+          try {
+            data = this.field.editor.get();
+            if (data == null) throw "valeur Null n'est pas acceptable.";
+
+            // UPDATE DATA
+            const status = confirm(
+              "Vous êtes sur le point de faire cette champs un champs à part. \
+    Il sera ajouter dans la collection '" +
+                this.collections.list[this.collections.selected] +
+                "'."
+            );
+            if (status) {
+              this.main.loading = true;
+              axios
+                .get(location.pathname + "explorer/main.php", {
+                  params: {
+                    panel: "data",
+                    action: "add",
+                    store: this.stores.list[this.stores.selected],
+                    collection:
+                      this.collections.list[this.collections.selected],
+                    data: JSON.stringify(data),
+                  },
+                })
+                .then(
+                  function (response) {
+                    const id =
+                      response.data[this.fields.collectionInfos.primary_key];
+                    this.fieldReload();
+                    this.fields.selected = 0;
+                    this.dataGet(id);
+                    this.main.loading = false;
+                  }.bind(this)
+                )
+                .catch(
+                  function (err) {
+                    console.log(err);
+                    this.main.loading = false;
+                  }.bind(this)
+                );
+            }
+          } catch (err) {
+            this.main.loading = false;
+            alert(
+              "Il y'a une valeur incorrect dans le DATA farmat JSON que vous avec ecrite."
+            );
+          }
+        },
+        dataReload() {
+          this.dataGet(this.field.id);
+        },
+      },
+    }).mount("#VUEJS");
+  </script>
+</html>
